@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lifecycles — Flip Card Activity</title>
+<link href="https://fonts.googleapis.com/css2?family=Bree+Serif&family=Fira+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #001F4E;
+    --coral:     #EE3260;
+    --lightblue: #AEDAf7;
+    --orange:    #E09230;
+    --grey:      #949597;
+    --white:     #ffffff;
+    --offwhite:  #f7f8fc;
+    --radius:    14px;
+  }
+
+  body {
+    font-family: 'Fira Sans', sans-serif;
+    background: var(--offwhite);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem 3rem;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .header-icon {
+    width: 52px;
+    height: 52px;
+    background: var(--navy);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+  }
+  .header-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--coral);
+    margin-bottom: 3px;
+  }
+  .header-title {
+    font-family: 'Bree Serif', serif;
+    font-size: 1.4rem;
+    color: var(--navy);
+    line-height: 1.2;
+  }
+  .header-hint {
+    font-size: 12px;
+    color: var(--grey);
+    margin-top: 2px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .tab {
+    background: var(--white);
+    border: 1.5px solid #e0e4ef;
+    border-radius: 24px;
+    padding: 7px 16px;
+    font-family: 'Fira Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab:hover { border-color: var(--navy); background: #f0f3fa; }
+  .tab.active {
+    background: var(--navy);
+    border-color: var(--navy);
+    color: var(--lightblue);
+  }
+  .tab-emoji { font-size: 1rem; }
+
+  /* Card area */
+  .card-wrap {
+    perspective: 1200px;
+    cursor: pointer;
+    margin-bottom: 1.25rem;
+    user-select: none;
+  }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(.4,0,.2,1);
+  }
+  .card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.75rem 2rem;
+    text-align: center;
+  }
+
+  /* Front face — navy */
+  .card-front {
+    background: var(--navy);
+    border: none;
+  }
+  .card-front .stage-pill {
+    background: rgba(174,218,247,0.15);
+    border: 1px solid rgba(174,218,247,0.3);
+    color: var(--lightblue);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 20px;
+    padding: 4px 12px;
+    margin-bottom: 10px;
+  }
+  .card-front .card-emoji {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+  }
+  .card-front .card-question {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--white);
+    line-height: 1.5;
+    max-width: 480px;
+  }
+  .card-front .tap-hint {
+    position: absolute;
+    bottom: 14px;
+    font-size: 11px;
+    color: rgba(174,218,247,0.5);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Back face — coral */
+  .card-back {
+    background: var(--coral);
+    transform: rotateY(180deg);
+  }
+  .card-back .back-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 10px;
+  }
+  .card-back .card-answer {
+    font-size: 14px;
+    color: var(--white);
+    line-height: 1.6;
+    max-width: 500px;
+  }
+  .card-back .tap-hint {
+    position: absolute;
+    bottom: 14px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+  }
+
+  /* Progress dots */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 1rem;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d0d5e8;
+    transition: all 0.25s;
+    cursor: pointer;
+  }
+  .dot.current { background: var(--navy); transform: scale(1.25); }
+  .dot.seen { background: var(--orange); }
+
+  /* Navigation */
+  .nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .nav-btn {
+    background: var(--white);
+    border: 1.5px solid #d8dcea;
+    border-radius: 24px;
+    padding: 8px 20px;
+    font-family: 'Fira Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-btn:hover:not(:disabled) { background: var(--navy); color: var(--lightblue); border-color: var(--navy); }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+  .counter {
+    font-size: 13px;
+    color: var(--grey);
+    text-align: center;
+    min-width: 80px;
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #e0e4ef;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .footer-text {
+    font-size: 12px;
+    color: var(--grey);
+  }
+  .reset-btn {
+    background: var(--orange);
+    border: none;
+    border-radius: 24px;
+    padding: 7px 18px;
+    font-family: 'Fira Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--white);
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .reset-btn:hover { opacity: 0.85; }
+
+  /* All-done state */
+  .done-banner {
+    background: var(--navy);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.25rem;
+  }
+  .done-banner .done-emoji { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .done-banner .done-title {
+    font-family: 'Bree Serif', serif;
+    font-size: 1.2rem;
+    color: var(--white);
+    margin-bottom: 0.5rem;
+  }
+  .done-banner .done-text { font-size: 13px; color: var(--lightblue); line-height: 1.5; }
+
+  @media (max-width: 480px) {
+    .card-inner { height: 250px; }
+    .card-face { padding: 1.25rem 1.25rem 2.5rem; }
+    .card-front .card-question { font-size: 14px; }
+    .card-back .card-answer { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-icon">🔄</div>
+    <div>
+      <div class="header-label">Module 1 · Interactive Activity</div>
+      <div class="header-title">Lifecycles — Flip Cards</div>
+      <div class="header-hint">Tap each card to reveal the answer</div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="card-area"></div>
+  <div class="progress-row" id="dots"></div>
+  <div class="nav-row">
+    <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">← Prev</button>
+    <div class="counter" id="counter"></div>
+    <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next →</button>
+  </div>
+  <div class="footer">
+    <span class="footer-text">Orange dots = cards you've already flipped</span>
+    <button class="reset-btn" onclick="resetAll()">↺ Start again</button>
+  </div>
+
+</div>
+
+<script>
+const TABS = [
+  { id:'butterfly', label:'Butterfly', emoji:'🦋' },
+  { id:'flea',      label:'Flea',      emoji:'🦟' },
+  { id:'chick',     label:'Chick',     emoji:'🐣' },
+  { id:'plant',     label:'Plant',     emoji:'🌱' },
+];
+
+const DATA = {
+  butterfly: [
+    { stage:'Stage 1 — Egg',
+      q:'What is the first stage of the butterfly lifecycle?',
+      a:'The butterfly lays tiny eggs on leaves. Depending on the species, eggs hatch in 3–7 days. The egg contains all the nutrients the embryo needs to develop.' },
+    { stage:'Stage 2 — Larva',
+      q:'What hatches from the egg and what is its main job?',
+      a:'A caterpillar (larva) hatches and its only job is to eat and grow. It munches leaves constantly, shedding its skin (moulting) several times as it gets bigger.' },
+    { stage:'Stage 3 — Pupa',
+      q:'What happens inside the chrysalis?',
+      a:'The caterpillar forms a hard shell called a chrysalis. Inside, its body completely breaks down and rebuilds into a butterfly. This transformation takes 10–14 days.' },
+    { stage:'Stage 4 — Adult',
+      q:'What does an adult butterfly do, and how long does it live?',
+      a:'The butterfly emerges, pumps fluid into its wings, and flies off to feed on nectar and find a mate. Most adult butterflies live only 2–4 weeks.' },
+    { stage:'Think about it 🌟',
+      q:'How does understanding the butterfly lifecycle connect to your work with shelter animals?',
+      a:'Cats are natural hunters of butterflies and insects. Understanding prey lifecycles helps us understand predator instincts in shelter cats — and why enrichment like feather wands works so well!' },
+  ],
+  flea: [
+    { stage:'Stage 1 — Egg',
+      q:'Where does the flea lifecycle begin, and where do the eggs end up?',
+      a:'Adult fleas lay eggs on the host animal (dog, cat, rabbit). The eggs are smooth and slippery — they fall off the animal into carpet, bedding, and furniture within minutes.' },
+    { stage:'Stage 2 — Larva',
+      q:'What do flea larvae look like and where do they hide?',
+      a:'Tiny, worm-like larvae (1–2mm) hatch and burrow into dark places like carpet fibres. They avoid light and feed on organic debris — including the dried blood in adult flea droppings.' },
+    { stage:'Stage 3 — Pupa',
+      q:'Why is the pupa stage the hardest to treat?',
+      a:'The larva spins a sticky cocoon that protects it from insecticides. It can stay dormant for months, waiting for vibrations, warmth, or CO₂ from a passing host before hatching.' },
+    { stage:'Stage 4 — Adult',
+      q:'Why is treating just the animal never enough to solve a flea problem?',
+      a:'Only 5% of a flea infestation lives on the animal. The other 95% — eggs, larvae and pupae — are in the environment. You must treat the home AND the animal to break the cycle.' },
+    { stage:'Shelter link 🌟',
+      q:'Why is the flea lifecycle so important for shelter work?',
+      a:'Many animals arrive at shelters with fleas. Understanding the full lifecycle means staff treat the animal AND the environment — kennels, bedding, common areas — protecting every animal in the shelter.' },
+  ],
+  chick: [
+    { stage:'Stage 1 — Egg',
+      q:'What happens inside a fertilised egg during the 21 days of incubation?',
+      a:'The embryo develops from a single cell into a fully formed chick, sustained entirely by the yolk. Temperature must stay at 37.5°C and the egg needs to be turned regularly to prevent the embryo sticking.' },
+    { stage:'Stage 2 — Hatching',
+      q:'What is "pipping" and why should you never help a chick hatch?',
+      a:'Pipping is when the chick uses its egg tooth to crack through the shell. It can take 12–24 hours. The struggle is vital — it builds the strength the chick needs to survive. Helping can cause fatal injury.' },
+    { stage:'Stage 3 — Hatchling',
+      q:'What are a newly hatched chick\'s most critical needs?',
+      a:'Chicks need warmth (35°C, reducing 3°C each week), fresh water, chick starter feed, and a safe brooder. They cannot regulate their own body temperature until feathers replace their down at 6 weeks.' },
+    { stage:'Stage 4 — Juvenile',
+      q:'When does a chick become a pullet or cockerel, and what does that mean?',
+      a:'Around 6 weeks, chicks grow adult feathers and sex becomes identifiable. Females are called pullets, males are cockerels. At this stage they\'re transitioning to adult feed and need more space.' },
+    { stage:'Stage 5 — Adult',
+      q:'At what age do chickens reach full maturity and what changes?',
+      a:'Hens begin laying eggs at 18–24 weeks. Roosters develop full plumage and begin crowing. Chickens live 5–10 years. In shelter settings, ex-battery hens often need extra support at this stage.' },
+  ],
+  plant: [
+    { stage:'Stage 1 — Seed',
+      q:'What three things does a seed need to germinate?',
+      a:'Water, warmth, and oxygen are the three essentials for germination. Some seeds also need light. Without the right combination, a seed stays dormant — sometimes for years!' },
+    { stage:'Stage 2 — Seedling',
+      q:'What makes the seedling stage so vulnerable?',
+      a:'Once sprouted, the seedling must establish roots quickly to access water and nutrients. Its first leaves (cotyledons) provide initial energy from the seed. Too much or too little water at this stage is fatal.' },
+    { stage:'Stage 3 — Vegetative growth',
+      q:'What is the plant\'s main focus during vegetative growth?',
+      a:'The plant focuses all its energy on building roots, stems, and leaves to maximise photosynthesis. It needs sunlight, water, and soil nutrients — especially nitrogen for leafy growth.' },
+    { stage:'Stage 4 — Flowering & seed set',
+      q:'Why is the flowering stage critical beyond producing pretty flowers?',
+      a:'Flowers attract pollinators (bees, butterflies, birds). Pollination fertilises the plant, leading to seed formation — completing the lifecycle and enabling reproduction for the next generation.' },
+    { stage:'Shelter link 🌟',
+      q:'How does the plant lifecycle connect to animal welfare at the shelter?',
+      a:'Many shelters grow veggie gardens as a participant activity. Understanding plant lifecycles supports enrichment creation — fresh veggie treats, herbs for sensory enrichment, and gardens that benefit both animals and participants.' },
+  ],
+};
+
+let currentTab = 'butterfly';
+let currentIdx = 0;
+let seen = {};
+
+function key(tab, idx) { return tab + '_' + idx; }
+
+function buildTabs() {
+  const el = document.getElementById('tabs');
+  el.innerHTML = TABS.map(t =>
+    `<button class="tab${t.id === currentTab ? ' active' : ''}" onclick="switchTab('${t.id}')">
+      <span class="tab-emoji">${t.emoji}</span>${t.label}
+    </button>`
+  ).join('');
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  currentIdx = 0;
+  buildTabs();
+  render();
+}
+
+function navigate(dir) {
+  const len = DATA[currentTab].length;
+  currentIdx = Math.max(0, Math.min(len - 1, currentIdx + dir));
+  render();
+}
+
+function flipCard() {
+  const k = key(currentTab, currentIdx);
+  const wrap = document.getElementById('flip-wrap');
+  if (!wrap) return;
+  seen[k] = true;
+  wrap.classList.toggle('flipped');
+  buildDots();
+}
+
+function resetAll() {
+  seen = {};
+  currentIdx = 0;
+  render();
+}
+
+function buildDots() {
+  const cards = DATA[currentTab];
+  document.getElementById('dots').innerHTML = cards.map((_, i) => {
+    const k = key(currentTab, i);
+    let cls = 'dot';
+    if (i === currentIdx) cls += ' current';
+    else if (seen[k]) cls += ' seen';
+    return `<span class="${cls}" onclick="jumpTo(${i})" title="Card ${i+1}"></span>`;
+  }).join('');
+}
+
+function jumpTo(idx) {
+  currentIdx = idx;
+  render();
+}
+
+function render() {
+  const cards = DATA[currentTab];
+  const card = cards[currentIdx];
+  const k = key(currentTab, currentIdx);
+  const isFlipped = seen[k] && document.getElementById('flip-wrap') && document.getElementById('flip-wrap').classList.contains('flipped');
+  const tabEmoji = TABS.find(t => t.id === currentTab).emoji;
+
+  const allSeen = cards.every((_, i) => seen[key(currentTab, i)]);
+
+  if (allSeen && currentIdx === cards.length - 1) {
+    const tabLabel = TABS.find(t => t.id === currentTab).label;
+    document.getElementById('card-area').innerHTML = `
+      <div class="done-banner">
+        <div class="done-emoji">🎉</div>
+        <div class="done-title">You've completed the ${tabLabel} set!</div>
+        <div class="done-text">Great work — try another animal group above, or hit Start Again to review these cards.</div>
+      </div>`;
+  } else {
+    document.getElementById('card-area').innerHTML = `
+      <div class="card-wrap" id="flip-wrap" onclick="flipCard()">
+        <div class="card-inner">
+          <div class="card-face card-front">
+            <div class="stage-pill">${card.stage}</div>
+            <div class="card-emoji">${tabEmoji}</div>
+            <div class="card-question">${card.q}</div>
+            <div class="tap-hint">👆 Tap to reveal answer</div>
+          </div>
+          <div class="card-face card-back">
+            <div class="back-label">Answer</div>
+            <div class="card-answer">${card.a}</div>
+            <div class="tap-hint">Tap to flip back</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  buildDots();
+
+  document.getElementById('counter').textContent = `Card ${currentIdx + 1} of ${cards.length}`;
+  document.getElementById('prev-btn').disabled = currentIdx === 0;
+  document.getElementById('next-btn').disabled = currentIdx === cards.length - 1;
+}
+
+buildTabs();
+render();
+</script>
+</body>
+</html>
